@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tax Management - Bangladesh Tax Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <style>
+        /* Extra for smooth fadeIn */
+        .fade-in { animation: fadeIn 0.8s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .hidden { display: none; }
+        .link { text-decoration: underline; }
+        table th, table td { padding: .5rem .75rem; border-bottom: 1px solid rgb(51 65 85/.4) }
+        /* Style for the chart container */
+        .chart-container {
+            position: relative;
+            height: 300px; /* Chart height */
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-200 font-sans">
+
+<nav class="flex justify-between items-center p-4 bg-slate-900/80 backdrop-blur-md fixed w-full z-50">
+    <div class="text-2xl font-bold">💰 Tax Manager</div>
+    <div class="space-x-2 md:space-x-4 text-sm md:text-base">
+        <button data-nav="landing" class="hover:text-purple-400">Home</button>
+        <button data-nav="auth" class="hover:text-purple-400">Login/Register</button>
+        <button data-nav="dashboard" class="hover:text-purple-400">Dashboard</button>
+        <button data-nav="documents" class="hover:text-purple-400">Documents</button>
+        <button id="nav-admin" data-nav="admin" class="hover:text-purple-400 hidden">Admin</button>
+        <button id="nav-logout" class="px-3 py-1 rounded bg-purple-600 hover:bg-purple-700 hidden">Logout</button>
+    </div>
+</nav>
+
+<div class="pt-24 max-w-6xl mx-auto space-y-10">
+
+    <section id="landing" class="fade-in">
+        <div class="text-center py-20 px-4 bg-gradient-to-br from-purple-600/90 to-blue-700/90 rounded-3xl" style="background-image: url('https://images.unsplash.com/photo-1581094794329-c8112a89ff1b'); background-size: cover;">
+            <h1 class="text-5xl font-bold text-white mb-4">Welcome to Tax Management</h1>
+            <p class="text-lg text-purple-100 mb-6">Manage your taxes, documents & payments easily in one place.</p>
+            <button onclick="showSection('auth')" class="px-6 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold">Get Started</button>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6 mt-12">
+            <div class="bg-slate-800/70 p-6 rounded-xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 text-center">
+                <h3 class="text-xl font-bold mb-2">💼 Easy Management</h3>
+                <p>Track your tax records and manage them efficiently with our system.</p>
+            </div>
+            <div class="bg-slate-800/70 p-6 rounded-xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 text-center">
+                <h3 class="text-xl font-bold mb-2">📄 Document Storage</h3>
+                <p>Securely store and access all your important financial documents anytime.</p>
+            </div>
+            <div class="bg-slate-800/70 p-6 rounded-xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 text-center">
+                <h3 class="text-xl font-bold mb-2">💳 Payment Tracking</h3>
+                <p>Monitor your payments and due dates with real-time updates.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="auth" class="hidden fade-in">
+        <div class="max-w-md mx-auto bg-slate-800/60 p-8 rounded-3xl backdrop-blur-md shadow-lg space-y-6">
+            <h1 class="text-3xl font-bold text-center">Tax Management</h1>
+            <p class="text-center text-slate-300">Manage taxes, docs & payments</p>
+
+            <div class="flex justify-center gap-4 mt-4">
+                <button id="tab-login" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 login-button-3d" onclick="switchTab('login')">Login</button>
+                <button id="tab-register" class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 login-button-3d" onclick="switchTab('register')">Register</button>
+            </div>
+
+            <div id="login-form" class="space-y-4 mt-4">
+                <input id="login-email" type="email" placeholder="Email" class="w-full p-3 rounded-lg bg-slate-700/50 focus:outline-purple-400">
+                <input id="login-password" type="password" placeholder="Password" class="w-full p-3 rounded-lg bg-slate-700/50 focus:outline-purple-400">
+                <button class="w-full px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 login-button-3d" onclick="login()">Login</button>
+            </div>
+
+            <div id="register-form" class="hidden space-y-4 mt-4">
+                <input id="reg-name" type="text" placeholder="Name" class="w-full p-3 rounded-lg bg-slate-700/50 focus:outline-purple-400">
+                <input id="reg-email" type="email" placeholder="Email" class="w-full p-3 rounded-lg bg-slate-700/50 focus:outline-purple-400">
+                <input id="reg-password" type="password" placeholder="Password" class="w-full p-3 rounded-lg bg-slate-700/50 focus:outline-purple-400">
+                <button class="w-full px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700" onclick="register()">Create Account</button>
+            </div>
+
+            <p class="text-center text-xs text-slate-400">Tip: Use an email containing <code>admin</code> to auto-create an admin account</p>
+        </div>
+    </section>
+
+    <section id="dashboard" class="hidden fade-in space-y-8">
+        <h2 class="text-3xl font-bold text-center text-purple-400">🇧🇩 Bangladesh Income Tax Calculator</h2>
+        <div class="grid lg:grid-cols-3 gap-6">
+
+            <div class="
+                bg-slate-800/60 p-6 rounded-3xl
+                shadow-xl space-y-4 text-white
+                transition duration-300 transform
+                hover:-translate-y-2 hover:shadow-2xl hover:scale-[1.01]
+                hover:ring-2 hover:ring-purple-500 lg:col-span-1
+            ">
+                <h3 class="text-xl font-bold border-b border-purple-500/50 pb-2">আয়কর হিসাব করুন (Calculate Income Tax)</h3>
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium">মোট বাৎসরিক আয় (Total Annual Income - BDT)</label>
+                    <input id="annual-income" type="number" step="1000" placeholder="e.g., 800000" class="w-full p-3 rounded-lg bg-slate-700/50 text-white placeholder-slate-400 focus:outline-purple-400" value="800000">
+                </div>
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium">করদাতার প্রকার (Taxpayer Type)</label>
+                    <select id="taxpayer-type" class="w-full p-3 rounded-lg bg-slate-700/50 text-white focus:outline-purple-400">
+                        <option value="male">পুরুষ (Male)</option>
+                        <option value="female">নারী / ৬৫+ প্রবীণ / প্রতিবন্ধী</option>
+                        <option value="freedom_fighter">গেজেটেড মুক্তিযোদ্ধা</option>
+                    </select>
+                </div>
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium">মোট বিনিয়োগ বা ছাড় (Total Investment/Exemption - BDT)</label>
+                    <input id="tax-exempt" type="number" step="1000" placeholder="e.g., 200000" class="w-full p-3 rounded-lg bg-slate-700/50 text-white placeholder-slate-400 focus:outline-purple-400" value="0">
+                    <p class="text-xs text-slate-400">Investment Rebate is calculated based on this amount.</p>
+                </div>
+                <button class="w-full px-4 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 transition duration-150 font-semibold text-lg" onclick="calculateBDTax()">Calculate Tax</button>
+            </div>
+
+            <div class="lg:col-span-2 space-y-6">
+
+                <div class="
+                    bg-slate-800/60 p-6 rounded-3xl
+                    shadow-xl space-y-3 text-white
+                    transition duration-300 transform
+                    hover:shadow-2xl hover:scale-[1.01]
+                    hover:ring-2 hover:ring-blue-500
+                ">
+                    <h3 class="text-xl font-bold border-b border-blue-500/50 pb-2">হিসাবের ফলাফল (Calculation Summary)</h3>
+                    <div class="grid grid-cols-2 gap-4 text-sm md:text-base">
+                        <div class="flex justify-between p-2 bg-slate-700/50 rounded-lg"><span>মোট আয় (Annual Income)</span><strong id="res-income">0.00</strong></div>
+                        <div class="flex justify-between p-2 bg-slate-700/50 rounded-lg"><span>করমুক্ত সীমা (Tax Exempt Limit)</span><strong id="res-exempt-limit">0.00</strong></div>
+                        <div class="flex justify-between p-2 bg-slate-700/50 rounded-lg"><span>করযোগ্য আয় (Taxable Income)</span><strong id="res-taxable">0.00</strong></div>
+                        <div class="flex justify-between p-2 bg-slate-700/50 rounded-lg"><span>মোট আয়কর (Gross Tax)</span><strong id="res-gross-tax">0.00</strong></div>
+                        <div class="flex justify-between p-2 bg-slate-700/50 rounded-lg"><span>বিনিয়োগ রেয়াত (Investment Rebate)</span><strong id="res-rebate">0.00</strong></div>
+                        <div class="flex justify-between p-2 bg-slate-700/50 rounded-lg font-bold text-lg text-green-300"><span>প্রদেয় আয়কর (Net Payable Tax)</span><strong id="res-net-tax">0.00</strong></div>
+                    </div>
+                    <p class="text-xs text-slate-400 pt-2">Minimum Tax (সর্বনিম্ন কর): <strong id="res-min-tax">5,000.00</strong> (Applicable if calculated tax is less than min tax)</p>
+                </div>
+
+                <div class="
+                    bg-slate-800/60 p-6 rounded-3xl
+                    shadow-xl space-y-3 text-white
+                    transition duration-300 transform
+                    hover:shadow-2xl hover:ring-2 hover:ring-green-500
+                ">
+                    <h3 class="text-xl font-bold border-b border-green-500/50 pb-2">ট্যাক্স বিভাজন (Tax Slab Breakdown)</h3>
+                    <div class="chart-container">
+                        <canvas id="taxChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+
+            <div class="
+                bg-slate-800/60 p-6 rounded-3xl
+                shadow-xl space-y-3 text-white
+                transition duration-300 transform
+                hover:-translate-y-2 hover:shadow-2xl hover:scale-[1.01]
+                hover:ring-2 hover:ring-purple-500
+            ">
+                <h3 class="text-xl font-bold">Quick Add (Utility)</h3>
+                <div class="space-y-2">
+                    <select id="tx-type" class="w-full p-2 rounded-lg bg-slate-700/50 text-white">
+                        <option>INCOME</option>
+                        <option>EXPENSE</option>
+                    </select>
+                    <input id="tx-category" placeholder="Category" class="w-full p-2 rounded-lg bg-slate-700/50 text-white placeholder-slate-400">
+                    <input id="tx-amount" type="number" step="0.01" placeholder="Amount" class="w-full p-2 rounded-lg bg-slate-700/50 text-white placeholder-slate-400">
+                    <input id="tx-date" type="date" class="w-full p-2 rounded-lg bg-slate-700/50 text-white">
+                    <select id="tx-taxcat" class="w-full p-2 rounded-lg bg-slate-700/50 text-white">
+                        <option value="">-- Tax Category --</option>
+                        <option value="VAT">VAT</option>
+                        <option value="ADVANCE_TAX">ADVANCE_TAX</option>
+                        <option value="OTHER">OTHER</option>
+                    </select>
+                    <input id="tx-note" placeholder="Note" class="w-full p-2 rounded-lg bg-slate-700/50 text-white placeholder-slate-400">
+                    <button class="w-full px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition duration-150" onclick="addTx()">Add</button>
+                </div>
+            </div>
+
+            <div class="
+                bg-slate-800/60 p-6 rounded-3xl
+                shadow-xl space-y-3 text-white
+                transition duration-300 transform
+                hover:-translate-y-2 hover:shadow-2xl hover:scale-[1.01]
+                hover:ring-2 hover:ring-blue-500
+            ">
+                <h3 class="text-xl font-bold">Data Overview (Utility)</h3>
+                <div class="space-y-2">
+                    <input id="ov-start" type="date" class="w-full p-2 rounded-lg bg-slate-700/50 text-white">
+                    <input id="ov-end" type="date" class="w-full p-2 rounded-lg bg-slate-700/50 text-white">
+                    <button class="w-full px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition duration-150" onclick="loadOverview()">Refresh</button>
+                </div>
+                <div class="space-y-1 mt-2 text-sm">
+                    <div class="flex justify-between"><span>Total Income (from Txs)</span><strong id="ov-income">0.00</strong></div>
+                    <div class="flex justify-between"><span>Total Expenses (from Txs)</span><strong id="ov-expense">0.00</strong></div>
+                    <div class="flex justify-between"><span>Taxable (Net)</span><strong id="ov-taxable">0.00</strong></div>
+                </div>
+            </div>
+
+            <div class="
+                bg-slate-800/60 p-6 rounded-3xl
+                shadow-xl space-y-3 text-white
+                transition duration-300 transform
+                hover:-translate-y-2 hover:shadow-2xl hover:scale-[1.01]
+                hover:ring-2 hover:ring-green-500
+            ">
+                <h3 class="text-xl font-bold">Payment Reminders</h3>
+                <ul id="reminders" class="space-y-1 list-disc pl-5 text-sm"></ul>
+            </div>
+        </div>
+
+        <div class="
+            bg-slate-800/60 p-6 rounded-3xl
+            shadow-xl overflow-x-auto text-white
+            transition duration-300 transform
+            hover:shadow-2xl hover:ring-2 hover:ring-indigo-500
+        ">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-xl font-bold">Transactions (Utility Data)</h3>
+                <input id="tx-search" placeholder="Search…" class="p-2 rounded-lg bg-slate-700/50 text-white placeholder-slate-400" />
+            </div>
+            <table class="w-full text-left border-collapse mt-4">
+                <thead>
+                    <tr class="
+                        bg-slate-700/70
+                        hover:bg-slate-600/80
+                        transition duration-200
+                        shadow-md rounded-lg
+                    ">
+                        <th class="p-3 rounded-tl-lg">Type</th>
+                        <th class="p-3">Category</th>
+                        <th class="p-3">Tax</th>
+                        <th class="p-3">Amount</th>
+                        <th class="p-3">Date</th>
+                        <th class="p-3">Note</th>
+                        <th class="p-3 rounded-tr-lg"></th>
+                    </tr>
+                </thead>
+                <tbody id="tx-table" class="space-y-2">
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="documents" class="hidden fade-in space-y-8 text-white">
+
+        <div class="
+            bg-slate-800/60 p-6 rounded-3xl
+            shadow-xl space-y-3
+            transition duration-300 transform
+            hover:-translate-y-2 hover:shadow-2xl hover:scale-[1.01]
+            hover:ring-2 hover:ring-purple-500
+        ">
+            <h3 class="text-xl font-bold mb-2">Upload Document</h3>
+            <form id="uploadForm" class="flex flex-col gap-2">
+                <input type="file" id="fileInput" class="p-2 rounded-lg bg-slate-700/50 text-white" />
+                <button class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition duration-150" type="submit">Upload</button>
+            </form>
+            <p class="text-xs text-slate-400 mt-2">Files are stored in browser storage. Clearing site data will remove them.</p>
+        </div>
+
+        <div class="
+            bg-slate-800/60 p-6 rounded-3xl
+            shadow-xl overflow-x-auto
+            transition duration-300 transform
+            hover:shadow-2xl hover:ring-2 hover:ring-blue-500
+        ">
+            <h3 class="text-xl font-bold mb-2">Your Documents</h3>
+            <table class="w-full text-left border-collapse mt-4">
+                <thead>
+                    <tr class="
+                        bg-slate-700/70
+                        hover:bg-slate-600/80
+                        transition duration-200
+                        shadow-md rounded-lg
+                    ">
+                        <th class="p-3 rounded-tl-lg">File</th>
+                        <th class="p-3">Size</th>
+                        <th class="p-3">Uploaded</th>
+                        <th class="p-3 rounded-tr-lg">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="doc-table"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="admin" class="hidden fade-in space-y-8 text-white">
+        <div class="grid md:grid-cols-2 gap-6">
+
+            <div class="
+                bg-slate-800/60 p-6 rounded-3xl
+                shadow-xl space-y-3
+                transition duration-300 transform
+                hover:-translate-y-2 hover:shadow-2xl hover:scale-[1.01]
+                hover:ring-2 hover:ring-indigo-500
+            ">
+                <h3 class="text-xl font-bold">System Overview</h3>
+                <div class="flex justify-between"><span>Total Users</span><strong id="ad-users">0</strong></div>
+                <div class="flex justify-between"><span>Total Transactions</span><strong id="ad-txs">0</strong></div>
+            </div>
+
+            <div class="
+                bg-slate-800/60 p-6 rounded-3xl
+                shadow-xl overflow-x-auto
+                transition duration-300 transform
+                hover:shadow-2xl hover:ring-2 hover:ring-green-500
+            ">
+                <h3 class="text-xl font-bold mb-2">Latest Transactions</h3>
+                <table class="w-full text-left border-collapse mt-4">
+                    <thead>
+                        <tr class="
+                            bg-slate-700/70
+                            hover:bg-slate-600/80
+                            transition duration-200
+                            shadow-md rounded-lg
+                        ">
+                            <th class="p-3 rounded-tl-lg">User</th>
+                            <th class="p-3">Type</th>
+                            <th class="p-3">Category</th>
+                            <th class="p-3">Amount</th>
+                            <th class="p-3 rounded-tr-lg">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ad-table">
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </section>
+
+</div>
+
+<script>
+/**************\n * Utilities  *
+ **************/
+const STORAGE_KEYS = {
+    users: 'tm_users',
+    txs: 'tm_transactions',
+    docs: 'tm_documents',
+    auth: 'tm_auth',
+};
+
+const BD_MIN_TAX = 5000; // Minimum tax for all city corporation areas (as per general rule)
+
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+// Formats number to Bangladeshi currency style (2 decimal places)
+const fmtMoney = (n) => (Number(n)||0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const todayStr = () => new Date().toISOString().slice(0,10);
+const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+function readLS(key, fallback){
+    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
+function writeLS(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+
+function currentUser(){ return readLS(STORAGE_KEYS.auth, null); }
+function setCurrentUser(u){ writeLS(STORAGE_KEYS.auth, u); }
+
+/******************\n * Navigation/UI  *
+ ******************/
+function showSection(id) {
+    ['landing','auth','dashboard','documents','admin'].forEach(s=>{
+        document.getElementById(s).classList.add('hidden');
+    });
+    document.getElementById(id).classList.remove('hidden');
+
+    // Lazy-load data when entering sections
+    if(id==='dashboard') { loadTransactions(); loadOverview(); renderReminders(); calculateBDTax(); }
+    if(id==='documents') { renderDocuments(); }
+    if(id==='admin') { ensureAdmin(); renderAdmin(); }
+}
+
+// Update nav visibility based on auth/role
+function refreshNav(){
+    const u = currentUser();
+    const isAuthed = !!u;
+    $('#nav-logout').classList.toggle('hidden', !isAuthed);
+    $('[data-nav="dashboard"]').classList.toggle('hidden', !isAuthed);
+    $('[data-nav="documents"]').classList.toggle('hidden', !isAuthed);
+    // Admin nav only for ADMIN
+    const isAdmin = isAuthed && u.role === 'ADMIN';
+    $('#nav-admin').classList.toggle('hidden', !isAdmin);
+}
+
+function ensureAuth(){
+    const u = currentUser();
+    refreshNav();
+    if(!u){ showSection('landing'); return; }
+    showSection('dashboard');
+}
+
+function ensureAdmin(){
+    const u = currentUser();
+    if(!(u && u.role==='ADMIN')){ showSection('dashboard'); }
+}
+
+// Hook nav buttons (already done in HTML, but here for completeness)
+$$('[data-nav]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+        const target = btn.getAttribute('data-nav');
+        if(target==='admin') ensureAdmin();
+        showSection(target);
+    })
+});
+
+$('#nav-logout').addEventListener('click', logout);
+
+/****************\n * Auth (mock)  *
+ ****************/
+function switchTab(which){
+    document.getElementById('login-form').classList.toggle('hidden', which!=='login');
+    document.getElementById('register-form').classList.toggle('hidden', which==='login');
+    document.getElementById('tab-login').classList.toggle('bg-purple-600', which==='login');
+    document.getElementById('tab-login').classList.toggle('bg-slate-700', which!=='login');
+    document.getElementById('tab-register').classList.toggle('bg-green-600', which==='register');
+    document.getElementById('tab-register').classList.toggle('bg-slate-700', which!=='register');
+}
+
+function users(){ return readLS(STORAGE_KEYS.users, []); }
+function saveUsers(arr){ writeLS(STORAGE_KEYS.users, arr); }
+
+function register(){
+    const name = $('#reg-name').value.trim();
+    const email = $('#reg-email').value.trim().toLowerCase();
+    const pass = $('#reg-password').value.trim();
+    if(!name || !email || !pass) { alert('Fill all fields'); return; }
+    const exists = users().some(u=>u.email===email);
+    if(exists){ alert('Email already registered'); return; }
+    const role = email.includes('admin') ? 'ADMIN' : 'USER'; // demo rule
+    const newUser = { id: uid(), name, email, role };
+    saveUsers([...users(), newUser]);
+    setCurrentUser(newUser);
+    alert('Registration successful!');
+    refreshNav();
+    showSection('dashboard');
+}
+
+function login(){
+    const email = $('#login-email').value.trim().toLowerCase();
+    const pass = $('#login-password').value.trim();
+    if(!email || !pass) { alert('Fill all fields'); return; }
+    const u = users().find(u=>u.email===email);
+    if(!u){ alert('No account found. Please register.'); switchTab('register'); return; }
+    // NOTE: Password check is omitted for simplicity in this frontend-only demo.
+    setCurrentUser(u);
+    alert('Login successful!');
+    refreshNav();
+    showSection('dashboard');
+}
+
+function logout(){
+    localStorage.removeItem(STORAGE_KEYS.auth);
+    refreshNav();
+    showSection('landing');
+}
+
+/*******************\n * Transactions    *
+ *******************/
+function allTxs(){ return readLS(STORAGE_KEYS.txs, []); }
+function saveTxs(arr){ writeLS(STORAGE_KEYS.txs, arr); }
+
+function addTx(){
+    const u = currentUser(); if(!u) return alert('Please login');
+    const type = $('#tx-type').value;
+    const category = $('#tx-category').value.trim();
+    const amount = parseFloat($('#tx-amount').value);
+    const date = $('#tx-date').value || todayStr();
+    const taxCat = $('#tx-taxcat').value;
+    const note = $('#tx-note').value.trim();
+
+    if(!category || isNaN(amount)) return alert('Provide category and amount');
+
+    const tx = { id: uid(), userId: u.id, type, category, amount, date, taxCat, note };
+    saveTxs([tx, ...allTxs()]);
+
+    // Reset form
+    $('#tx-category').value = '';
+    $('#tx-amount').value = '';
+    $('#tx-date').value = '';
+    $('#tx-taxcat').value = '';
+    $('#tx-note').value = '';
+
+    loadTransactions();
+    loadOverview();
+    renderReminders();
+}
+
+function deleteTx(id){
+    if(!confirm('Delete this transaction?')) return;
+    saveTxs(allTxs().filter(t=>t.id!==id));
+    loadTransactions();
+    loadOverview();
+    renderReminders();
+}
+
+function txsForUser(){
+    const u = currentUser(); if(!u) return [];
+    return allTxs().filter(t=>t.userId===u.id);
+}
+
+function loadTransactions(){
+    const tbody = $('#tx-table');
+    const q = ($('#tx-search')?.value || '').toLowerCase();
+    const rows = txsForUser()
+        .filter(t=> !q || [t.type,t.category,t.taxCat,t.note].join(' ').toLowerCase().includes(q))
+        .sort((a,b)=> b.date.localeCompare(a.date))
+        .map(t=>`
+            <tr>
+                <td>${t.type}</td>
+                <td>${t.category || '-'}</td>
+                <td>${t.taxCat || '-'}</td>
+                <td>${fmtMoney(t.amount)}</td>
+                <td>${t.date}</td>
+                <td>${t.note || ''}</td>
+                <td class="text-right">
+                    <button class="text-red-300 hover:text-red-400" onclick="deleteTx('${t.id}')">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+    tbody.innerHTML = rows || `<tr><td colspan="7" class="text-center text-slate-400 py-3">No transactions yet.</td></tr>`;
+}
+
+$('#tx-search')?.addEventListener('input', loadTransactions);
+
+function inRange(date, start, end){
+    if(start && date < start) return false;
+    if(end && date > end) return false;
+    return true;
+}
+
+// **MODIFIED:** Simplified loadOverview to only show total utility transactions
+function loadOverview(){
+    const start = $('#ov-start').value || '0000-01-01';
+    const end = $('#ov-end').value || '9999-12-31';
+
+    const list = txsForUser().filter(t=> inRange(t.date, start, end));
+    const income = list.filter(t=>t.type==='INCOME').reduce((s,t)=>s + Number(t.amount), 0);
+    const expense = list.filter(t=>t.type==='EXPENSE').reduce((s,t)=>s + Number(t.amount), 0);
+    const taxable = Math.max(0, income - expense);
+
+    $('#ov-income').textContent = fmtMoney(income);
+    $('#ov-expense').textContent = fmtMoney(expense);
+    $('#ov-taxable').textContent = fmtMoney(taxable);
+}
+
+/*******************\n * BD Tax Calc     *
+ *******************/
+
+let taxChart; // To hold the Chart.js instance
+
+/**
+ * Calculates Bangladesh Income Tax based on tax year 2023-2024 slabs (for demonstration).
+ */
+function calculateIncomeTaxBD(annualIncome, type, investmentAmount) {
+    let exemptLimit;
+    const income = Number(annualIncome) || 0;
+    const investment = Number(investmentAmount) || 0;
+    
+    // 1. Tax Exemption Limit (FY 2023-24 Example)
+    switch(type) {
+        case 'female':
+            exemptLimit = 375000; // Female, 65+ Senior, Disabled
+            break;
+        case 'freedom_fighter':
+            exemptLimit = 500000; // Gazetted Freedom Fighter
+            break;
+        case 'male':
+        default:
+            exemptLimit = 350000; // Male/Other
+            break;
+    }
+
+    const taxableIncome = Math.max(0, income - exemptLimit);
+    let grossTax = 0;
+    let remainingTaxable = taxableIncome;
+    const taxSlabs = [];
+
+    // 2. Progressive Tax Slabs (FY 2023-24 Example)
+    const slabs = [
+        { limit: 100000, rate: 0.05, name: "First 1 Lakh (5%)" },
+        { limit: 300000, rate: 0.10, name: "Next 3 Lakh (10%)" },
+        { limit: 400000, rate: 0.15, name: "Next 4 Lakh (15%)" },
+        { limit: 500000, rate: 0.20, name: "Next 5 Lakh (20%)" },
+        { limit: Infinity, rate: 0.25, name: "Balance (25%)" }
+    ];
+
+    for(const slab of slabs) {
+        let amountInSlab;
+        if (slab.limit === Infinity) {
+            amountInSlab = remainingTaxable;
+        } else {
+            amountInSlab = Math.min(remainingTaxable, slab.limit);
+        }
+
+        if (amountInSlab > 0) {
+            const tax = amountInSlab * slab.rate;
+            grossTax += tax;
+            remainingTaxable -= amountInSlab;
+            taxSlabs.push({ name: slab.name, taxableAmount: amountInSlab, taxAmount: tax });
+        }
+        
+        if (remainingTaxable <= 0) break;
+    }
+    
+    // 3. Investment Tax Rebate (15% on lowest of 3 amounts)
+    const maxRebateBase = Math.min(
+        investment, 
+        income * 0.20, 
+        10000000 // BDT 1 Crore Max Investment Limit
+    );
+    
+    const rebateAmount = maxRebateBase * 0.15;
+    
+    // 4. Net Payable Tax
+    let netTax = grossTax - rebateAmount;
+
+    // 5. Minimum Tax Check
+    netTax = Math.max(netTax, BD_MIN_TAX);
+    
+    return {
+        exemptLimit,
+        taxableIncome,
+        grossTax,
+        rebateAmount: Math.max(0, rebateAmount), 
+        netTax: Math.max(0, netTax), 
+        taxSlabs
+    };
+}
+
+function calculateBDTax() {
+    const annualIncome = $('#annual-income').value;
+    const taxpayerType = $('#taxpayer-type').value;
+    const taxExempt = $('#tax-exempt').value;
+
+    if (!annualIncome || isNaN(annualIncome)) {
+        // alert('Please enter a valid Annual Income.');
+        // Don't alert, just use 0 if invalid
+        $('#annual-income').value = 0;
+    }
+    
+    const income = parseFloat($('#annual-income').value);
+    const exempt = parseFloat(taxExempt);
+
+    const result = calculateIncomeTaxBD(income, taxpayerType, exempt);
+
+    // Update Dashboard Results
+    $('#res-income').textContent = fmtMoney(income);
+    $('#res-exempt-limit').textContent = fmtMoney(result.exemptLimit);
+    $('#res-taxable').textContent = fmtMoney(result.taxableIncome);
+    $('#res-gross-tax').textContent = fmtMoney(result.grossTax);
+    $('#res-rebate').textContent = fmtMoney(result.rebateAmount);
+    $('#res-min-tax').textContent = fmtMoney(BD_MIN_TAX); // Display minimum tax
+    $('#res-net-tax').textContent = fmtMoney(result.netTax);
+
+    // Render Chart Diagram
+    renderTaxChart(result.taxSlabs, result.netTax);
+}
+
+
+function renderTaxChart(slabs, netTax) {
+    const ctx = document.getElementById('taxChart').getContext('2d');
+    
+    // Prepare data for the chart
+    const labels = slabs.map(s => s.name);
+    const data = slabs.map(s => s.taxAmount);
+    
+    // If no tax is calculated (income below exempt limit), show the Net Tax (which will be min tax)
+    if (data.every(d => d === 0) && netTax > 0) {
+        labels.push("Minimum Tax / (Net Tax)");
+        data.push(netTax);
+    }
+    
+    // Destroy previous chart instance if it exists
+    if (taxChart) {
+        taxChart.destroy();
+    }
+    
+    taxChart = new Chart(ctx, {
+        type: 'bar', // Using Bar Chart for better slab comparison
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Tax Amount (BDT)',
+                data: data,
+                backgroundColor: [
+                    'rgba(192, 132, 252, 0.7)', 
+                    'rgba(129, 140, 248, 0.7)', 
+                    'rgba(96, 165, 250, 0.7)',  
+                    'rgba(52, 211, 163, 0.7)',  
+                    'rgba(251, 191, 36, 0.7)',
+                    'rgba(248, 113, 113, 0.7)' // Red for minimum/net tax if 0 in slabs
+                ],
+                borderColor: [
+                    'rgba(192, 132, 252, 1)',
+                    'rgba(129, 140, 248, 1)',
+                    'rgba(96, 165, 250, 1)',
+                    'rgba(52, 211, 163, 1)',
+                    'rgba(251, 191, 36, 1)',
+                    'rgba(248, 113, 113, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Tax Amount (BDT)',
+                        color: 'rgb(203 213 225)'
+                    },
+                    ticks: { color: 'rgb(203 213 225)' }
+                },
+                x: {
+                    ticks: { color: 'rgb(203 213 225)' }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                title: { display: true, text: 'Income Tax Calculation Breakdown', color: 'rgb(203 213 225)' }
+            }
+        }
+    });
+}
+
+
+/*******************\n * Reminders       *
+ *******************/
+function renderReminders(){
+    const ul = $('#reminders');
+    const items = [];
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth(); // 0-11
+
+    // Quarterly advance income tax : due 15 Jan/Apr/Jul/Oct
+    const quarters = [
+        new Date(y,0,15), new Date(y,3,15), new Date(y,6,15), new Date(y,9,15)
+    ];
+    quarters.forEach(d=>{
+        const daysLeft = Math.ceil((d - now)/(1000*60*60*24));
+        if(daysLeft >=0 && daysLeft <= 30){
+            items.push(`Advance tax due on ${d.toISOString().slice(0,10)} (in ${daysLeft} days)`);
+        }
+    });
+
+    // VAT monthly : 15th of next month if there were VAT txs in current month
+    const hadVAT = txsForUser().some(t=>{
+        const dt = new Date(t.date);
+        return t.taxCat==='VAT' && dt.getFullYear()===y && dt.getMonth()===m;
+    });
+    if(hadVAT){
+        const due = new Date(y, m+1, 15);
+        const daysLeft = Math.ceil((due - now)/(1000*60*60*24));
+        if(daysLeft >= 0) items.push(`VAT return/payment due on ${due.toISOString().slice(0,10)} (in ${daysLeft} days)`);
+    }
+
+    // Income Tax Return Submission Deadline (November 30)
+    let returnDue = new Date(y, 10, 30);
+    if(now.getMonth() > 10) returnDue = new Date(y+1, 10, 30); // Next year's due date
+    const daysLeft = Math.ceil((returnDue - now)/(1000*60*60*24));
+    if(daysLeft >=0 && daysLeft <= 90){ // Show reminder if within 3 months
+        items.push(`Tax Return Submission due on ${returnDue.toISOString().slice(0,10)} (in ${daysLeft} days)`);
+    }
+
+    ul.innerHTML = items.length ? items.map(i=>`<li>${i}</li>`).join('') : '<li class="text-slate-400">No upcoming reminders.</li>';
+}
+
+/*******************\n * Documents (LS)  *
+ *******************/
+function allDocs(){ return readLS(STORAGE_KEYS.docs, []); }
+function saveDocs(arr){ writeLS(STORAGE_KEYS.docs, arr); }
+
+function renderDocuments(){
+    const u = currentUser(); if(!u) return;
+    const tbody = $('#doc-table');
+    const list = allDocs().filter(d=>d.userId===u.id).sort((a,b)=> b.uploadedAt.localeCompare(a.uploadedAt));
+    tbody.innerHTML = list.map(d=>`
+        <tr>
+            <td>${d.name}</td>
+            <td>${(d.size/1024).toFixed(1)} KB</td>
+            <td>${d.uploadedAt.replace('T',' ').slice(0,16)}</td>
+            <td>
+                ${d.url ? `<a class="link" href="${d.url}" download="${d.name}">Download</a> · `: ''}
+                <button class="text-red-300 hover:text-red-400" onclick="deleteDoc('${d.id}')">Delete</button>
+            </td>
+        </tr>`).join('') || `<tr><td colspan="4" class="text-center text-slate-400 py-3">No documents yet.</td></tr>`;
+}
+
+function deleteDoc(id){
+    if(!confirm('Delete this document?')) return;
+    const d = allDocs().find(x=>x.id===id);
+    if(d?.url) URL.revokeObjectURL(d.url);
+    saveDocs(allDocs().filter(x=>x.id!==id));
+    renderDocuments();
+}
+
+// Upload handler: store metadata + object URL for this session
+const uploadForm = document.getElementById('uploadForm');
+if(uploadForm){
+    uploadForm.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const u = currentUser(); if(!u) return alert('Please login');
+        const file = document.getElementById('fileInput').files[0];
+        if(!file) return alert('Choose a file');
+        const doc = { id: uid(), userId: u.id, name: file.name, size: file.size, uploadedAt: new Date().toISOString(), url: URL.createObjectURL(file) };
+        saveDocs([doc, ...allDocs()]);
+        document.getElementById('fileInput').value = '';
+        renderDocuments();
+    });
+}
+
+/*******************\n * Admin *
+ *******************/
+function renderAdmin(){
+    const usersArr = users();
+    const txsArr = allTxs();
+    $('#ad-users').textContent = String(usersArr.length);
+    $('#ad-txs').textContent = String(txsArr.length);
+
+    const tbody = $('#ad-table');
+    const rows = txsArr
+        .slice()
+        .sort((a,b)=> b.date.localeCompare(a.date))
+        .slice(0, 15)
+        .map(t=>{
+            const u = usersArr.find(x=>x.id===t.userId);
+            return `<tr><td>${u?.email || '-'}</td><td>${t.type}</td><td>${t.category}</td><td>${fmtMoney(t.amount)}</td><td>${t.date}</td></tr>`;
+        }).join('');
+    tbody.innerHTML = rows || `<tr><td colspan="5" class="text-center text-slate-400 py-3">No transactions yet.</td></tr>`;
+}
+
+/*******************\n * Bootstrap       *
+ *******************/
+document.addEventListener('DOMContentLoaded', () => {
+    // Pre-fill overview dates to current month
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
+    const end = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().slice(0,10);
+    $('#ov-start').value = start;
+    $('#ov-end').value = end;
+    ensureAuth();
+});
+</script>
+</body>
+</html>
