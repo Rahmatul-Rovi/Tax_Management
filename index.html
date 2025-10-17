@@ -24,74 +24,94 @@
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-200 font-sans">
+<body class="bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 text-slate-100 font-sans">
 
-<nav class="flex justify-between items-center p-4 bg-slate-900/80 backdrop-blur-md fixed w-full z-50">
-    <div class="text-2xl font-bold">💰 Tax Manager</div>
-    <div class="space-x-2 md:space-x-4 text-sm md:text-base">
-        <button data-nav="landing" class="hover:text-purple-400">Home</button>
-        <button data-nav="auth" class="hover:text-purple-400">Login/Register</button>
-        <button data-nav="dashboard" class="hover:text-purple-400">Dashboard</button>
-        <button data-nav="documents" class="hover:text-purple-400">Documents</button>
-        <button id="nav-admin" data-nav="admin" class="hover:text-purple-400 hidden">Admin</button>
-        <button id="nav-logout" class="px-3 py-1 rounded bg-purple-600 hover:bg-purple-700 hidden">Logout</button>
+<nav class="flex justify-between items-center p-4 bg-slate-900/90 backdrop-blur-lg fixed w-full z-50 shadow-2xl shadow-purple-900/50 border-b border-purple-500/20">
+    <div class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-purple-500 transition duration-300 hover:scale-[1.02] hover:from-teal-300 hover:to-purple-400 cursor-pointer">
+        💰 Tax Manager
+    </div>
+    <div class="space-x-2 md:space-x-4 text-sm md:text-base font-medium">
+        <button data-nav="landing" class="hover:text-teal-400 transition duration-150">Home</button>
+        <button data-nav="auth" class="hover:text-teal-400 transition duration-150">Login/Register</button>
+        <button data-nav="dashboard" class="hover:text-teal-400 transition duration-150">Dashboard</button>
+        <button data-nav="documents" class="hover:text-teal-400 transition duration-150">Documents</button>
+        <button id="nav-admin" data-nav="admin" class="hover:text-teal-400 transition duration-150 hidden">Admin</button>
+        <button id="nav-logout" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-lg hover:shadow-xl transition duration-300 hidden">Logout</button>
     </div>
 </nav>
 
 <div class="pt-24 max-w-6xl mx-auto space-y-10">
 
     <section id="landing" class="fade-in">
-        <div class="text-center py-20 px-4 bg-gradient-to-br from-purple-600/90 to-blue-700/90 rounded-3xl" style="background-image: url('https://images.unsplash.com/photo-1581094794329-c8112a89ff1b'); background-size: cover;">
-            <h1 class="text-5xl font-bold text-white mb-4">Welcome to Tax Management</h1>
-            <p class="text-lg text-purple-100 mb-6">Manage your taxes, documents & payments easily in one place.</p>
-            <button onclick="showSection('auth')" class="px-6 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold">Get Started</button>
+        <div class="text-center py-20 px-4 rounded-3xl relative overflow-hidden
+             bg-gradient-to-br from-purple-700 to-blue-600 
+             shadow-2xl shadow-purple-800/80 
+             border-4 border-white/10 ring-4 ring-purple-400/30 
+             transition duration-500 hover:shadow-purple-700/90 hover:ring-purple-300/50">
+            
+            <h1 class="text-6xl font-black text-white mb-6 tracking-tight text-shadow-lg">
+                Welcome to Tax Management
+            </h1>
+            <p class="text-xl text-purple-200 mb-8 font-light max-w-2xl mx-auto">
+                Manage your taxes, documents & payments easily in one secure, digital place.
+            </p>
+            <button onclick="showSection('auth')" 
+                    class="px-8 py-4 text-lg font-extrabold rounded-full 
+                           bg-teal-400 text-slate-900 
+                           shadow-2xl shadow-teal-500/80 
+                           hover:bg-teal-300 hover:shadow-teal-400/90 
+                           transition transform duration-300 hover:scale-105 active:scale-95 active:shadow-none 
+                           border border-teal-200">
+                Get Started Today
+            </button>
         </div>
 
         <div class="grid md:grid-cols-3 gap-6 mt-12">
-            <div class="bg-slate-800/70 p-6 rounded-xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 text-center">
-                <h3 class="text-xl font-bold mb-2">💼 Easy Management</h3>
-                <p>Track your tax records and manage them efficiently with our system.</p>
+            <div class="bg-gray-800/70 p-6 rounded-xl shadow-2xl shadow-slate-900/80 hover:shadow-purple-500/30 transition transform hover:-translate-y-1 duration-300 text-center border-t-2 border-purple-500/50">
+                <h3 class="text-2xl font-bold mb-2 text-purple-400">💼 Easy Management</h3>
+                <p>Track your tax records and manage them efficiently with our powerful system.</p>
             </div>
-            <div class="bg-slate-800/70 p-6 rounded-xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 text-center">
-                <h3 class="text-xl font-bold mb-2">📄 Document Storage</h3>
-                <p>Securely store and access all your important financial documents anytime.</p>
+            <div class="bg-gray-800/70 p-6 rounded-xl shadow-2xl shadow-slate-900/80 hover:shadow-purple-500/30 transition transform hover:-translate-y-1 duration-300 text-center border-t-2 border-purple-500/50">
+                <h3 class="text-2xl font-bold mb-2 text-teal-400">📄 Document Storage</h3>
+                <p>Securely store and access all your important financial documents anytime, anywhere.</p>
             </div>
-            <div class="bg-slate-800/70 p-6 rounded-xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 text-center">
-                <h3 class="text-xl font-bold mb-2">💳 Payment Tracking</h3>
-                <p>Monitor your payments and due dates with real-time updates.</p>
+            <div class="bg-gray-800/70 p-6 rounded-xl shadow-2xl shadow-slate-900/80 hover:shadow-purple-500/30 transition transform hover:-translate-y-1 duration-300 text-center border-t-2 border-purple-500/50">
+                <h3 class="text-2xl font-bold mb-2 text-blue-400">💳 Payment Tracking</h3>
+                <p>Monitor your payments and due dates with real-time updates and notifications.</p>
             </div>
         </div>
     </section>
 
     <section id="auth" class="hidden fade-in">
-        <div class="max-w-md mx-auto bg-slate-800/60 p-8 rounded-3xl backdrop-blur-md shadow-lg space-y-6">
-            <h1 class="text-3xl font-bold text-center">Tax Management</h1>
+        <div class="max-w-md mx-auto bg-slate-800/80 p-8 rounded-3xl backdrop-blur-lg shadow-2xl shadow-purple-900/70 space-y-6 border border-purple-600/50">
+            <h1 class="text-3xl font-bold text-center text-teal-400">Tax Management</h1>
             <p class="text-center text-slate-300">Manage taxes, docs & payments</p>
 
             <div class="flex justify-center gap-4 mt-4">
-                <button id="tab-login" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 login-button-3d" onclick="switchTab('login')">Login</button>
-                <button id="tab-register" class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 login-button-3d" onclick="switchTab('register')">Register</button>
+                <button id="tab-login" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold transition duration-200 shadow-lg shadow-purple-700/50 active:translate-y-0.5" onclick="switchTab('login')">Login</button>
+                <button id="tab-register" class="px-5 py-2 rounded-xl bg-green-600 hover:bg-green-500 text-white font-semibold transition duration-200 shadow-lg shadow-green-700/50 active:translate-y-0.5" onclick="switchTab('register')">Register</button>
             </div>
 
             <div id="login-form" class="space-y-4 mt-4">
-                <input id="login-email" type="email" placeholder="Email" class="w-full p-3 rounded-lg bg-slate-700/50 focus:outline-purple-400">
-                <input id="login-password" type="password" placeholder="Password" class="w-full p-3 rounded-lg bg-slate-700/50 focus:outline-purple-400">
-                <button class="w-full px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 login-button-3d" onclick="login()">Login</button>
+                <input id="login-email" type="email" placeholder="Email" class="w-full p-3 rounded-xl bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-purple-400/80 border border-slate-700">
+                <input id="login-password" type="password" placeholder="Password" class="w-full p-3 rounded-xl bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-purple-400/80 border border-slate-700">
+                <button class="w-full px-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 font-bold transition duration-200 shadow-xl shadow-purple-700/50 active:translate-y-0.5" onclick="login()">Secure Login</button>
             </div>
 
             <div id="register-form" class="hidden space-y-4 mt-4">
-                <input id="reg-name" type="text" placeholder="Name" class="w-full p-3 rounded-lg bg-slate-700/50 focus:outline-purple-400">
-                <input id="reg-email" type="email" placeholder="Email" class="w-full p-3 rounded-lg bg-slate-700/50 focus:outline-purple-400">
-                <input id="reg-password" type="password" placeholder="Password" class="w-full p-3 rounded-lg bg-slate-700/50 focus:outline-purple-400">
-                <button class="w-full px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700" onclick="register()">Create Account</button>
+                <input id="reg-name" type="text" placeholder="Name" class="w-full p-3 rounded-xl bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-green-400/80 border border-slate-700">
+                <input id="reg-email" type="email" placeholder="Email" class="w-full p-3 rounded-xl bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-green-400/80 border border-slate-700">
+                <input id="reg-password" type="password" placeholder="Password" class="w-full p-3 rounded-xl bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-green-400/80 border border-slate-700">
+                <button class="w-full px-4 py-3 rounded-xl bg-green-600 hover:bg-green-500 font-bold transition duration-200 shadow-xl shadow-green-700/50 active:translate-y-0.5" onclick="register()">Create Account</button>
             </div>
 
             <p class="text-center text-xs text-slate-400">Tip: Use an email containing <code>admin</code> to auto-create an admin account</p>
         </div>
     </section>
+</div>
 
     <section id="dashboard" class="hidden fade-in space-y-8">
-        <h2 class="text-3xl font-bold text-center text-purple-400">🇧🇩 Bangladesh Income Tax Calculator</h2>
+        <h2 class="text-3xl font-bold text-center text-purple-400">Bangladesh Income Tax Calculator</h2>
         <div class="grid lg:grid-cols-3 gap-6">
 
             <div class="
