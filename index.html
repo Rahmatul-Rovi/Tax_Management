@@ -42,9 +42,20 @@
 <body class="bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 text-slate-100 font-sans">
 
 <nav class="flex justify-between items-center p-4 bg-slate-900/90 backdrop-blur-lg fixed w-full z-50 shadow-2xl shadow-purple-900/50 border-b border-purple-500/20">
-    <div class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-purple-500 transition duration-300 hover:scale-[1.02] hover:from-teal-300 hover:to-purple-400 cursor-pointer">
-        💰 Tax Manager
-    </div>
+ <a href="" 
+   class="text-3xl font-extrabold transition duration-300 hover:scale-[1.02] cursor-pointer no-underline">
+   <span class="text-yellow-400">💰</span> 
+   <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-purple-500 hover:from-teal-300 hover:to-purple-400">
+      Tax Manager
+   </span>
+</a>
+
+
+
+
+
+
+
     <div class="space-x-2 md:space-x-4 text-sm md:text-base font-medium">
         <button data-nav="landing" class="hover:text-teal-400 transition duration-150">Home</button>
         <button data-nav="auth" class="hover:text-teal-400 transition duration-150">Login/Register</button>
@@ -113,10 +124,10 @@
     <div>
       <h3 class="text-cyan-400 font-semibold text-lg mb-3">Quick Links</h3>
       <ul class="space-y-2">
-        <li><a href="#" class="text-gray-300 hover:text-cyan-400 transition-all hover:drop-shadow-[0_0_6px_#00e0ff]">Home</a></li>
-        <li><a href="#" class="text-gray-300 hover:text-cyan-400 transition-all hover:drop-shadow-[0_0_6px_#00e0ff]">About</a></li>
-        <li><a href="#" class="text-gray-300 hover:text-cyan-400 transition-all hover:drop-shadow-[0_0_6px_#00e0ff]">Features</a></li>
-        <li><a href="#" class="text-gray-300 hover:text-cyan-400 transition-all hover:drop-shadow-[0_0_6px_#00e0ff]">Contact</a></li>
+        <li><a href=" " class="text-gray-300 hover:text-cyan-400 transition-all hover:drop-shadow-[0_0_6px_#00e0ff]">Home</a></li>
+        <li><a href=" " class="text-gray-300 hover:text-cyan-400 transition-all hover:drop-shadow-[0_0_6px_#00e0ff]">About</a></li>
+        <li><a href=" " class="text-gray-300 hover:text-cyan-400 transition-all hover:drop-shadow-[0_0_6px_#00e0ff]">Features</a></li>
+        <li><a href=" " class="text-gray-300 hover:text-cyan-400 transition-all hover:drop-shadow-[0_0_6px_#00e0ff]">Contact</a></li>
       </ul>
     </div>
 
@@ -124,22 +135,22 @@
    <div>
   <h3 class="text-cyan-400 font-semibold text-lg mb-3">Follow Us</h3>
   <div class="flex justify-center md:justify-start space-x-6 text-2xl mt-4">
-    <a href="#" class="text-gray-300 hover:text-blue-500 transition transform hover:scale-125 hover:rotate-6">
+    <a href="https://nbr.gov.bd/" class="text-gray-300 hover:text-blue-500 transition transform hover:scale-125 hover:rotate-6">
       <i class="fab fa-facebook-square"></i>
     </a>
-    <a href="#" class="text-gray-300 hover:text-sky-400 transition transform hover:scale-125 hover:rotate-6">
+    <a href="https://nbr.gov.bd/" class="text-gray-300 hover:text-sky-400 transition transform hover:scale-125 hover:rotate-6">
       <i class="fa-brands fa-twitter"></i>
     </a>
-    <a href="#" class="text-gray-300 hover:text-pink-500 transition transform hover:scale-125 hover:rotate-6">
+    <a href="https://nbr.gov.bd/" class="text-gray-300 hover:text-pink-500 transition transform hover:scale-125 hover:rotate-6">
       <i class="fa-brands fa-instagram"></i>
     </a>
-    <a href="#" class="text-gray-300 hover:text-blue-600 transition transform hover:scale-125 hover:rotate-6">
+    <a href="https://nbr.gov.bd/" class="text-gray-300 hover:text-blue-600 transition transform hover:scale-125 hover:rotate-6">
       <i class="fa-brands fa-linkedin-in"></i>
     </a>
-    <a href="#" class="text-gray-300 hover:text-gray-100 transition transform hover:scale-125 hover:rotate-6">
+    <a href="https://nbr.gov.bd/" class="text-gray-300 hover:text-gray-100 transition transform hover:scale-125 hover:rotate-6">
       <i class="fa-brands fa-github"></i>
     </a>
-    <a href="#" class="text-gray-300 hover:text-red-500 transition transform hover:scale-125 hover:rotate-6">
+    <a href="https://nbr.gov.bd/" class="text-gray-300 hover:text-red-500 transition transform hover:scale-125 hover:rotate-6">
       <i class="fa-brands fa-youtube"></i>
     </a>
   </div>
@@ -263,7 +274,7 @@
             </div>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-6">
+        <!-- <div class="grid md:grid-cols-3 gap-6">
 
             <div class="
                 bg-slate-800/60 p-6 rounded-3xl
@@ -354,7 +365,7 @@
                 <tbody id="tx-table" class="space-y-2">
                 </tbody>
             </table>
-        </div>
+        </div> -->
     </section>
 
     <section id="documents" class="hidden fade-in space-y-8 text-white">
@@ -399,7 +410,8 @@
             </table>
         </div>
     </section>
-
+    
+     <!-- Amin Section -->
     <section id="admin" class="hidden fade-in space-y-8 text-white">
         <div class="grid md:grid-cols-2 gap-6">
 
@@ -591,90 +603,7 @@ function logout(){
  *******************/
 function allTxs(){ return readLS(STORAGE_KEYS.txs, []); }
 function saveTxs(arr){ writeLS(STORAGE_KEYS.txs, arr); }
-
-function addTx(){
-    const u = currentUser(); if(!u) return alert('Please login');
-    const type = $('#tx-type').value;
-    const category = $('#tx-category').value.trim();
-    const amount = parseFloat($('#tx-amount').value);
-    const date = $('#tx-date').value || todayStr();
-    const taxCat = $('#tx-taxcat').value;
-    const note = $('#tx-note').value.trim();
-
-    if(!category || isNaN(amount)) return alert('Provide category and amount');
-
-    const tx = { id: uid(), userId: u.id, type, category, amount, date, taxCat, note };
-    saveTxs([tx, ...allTxs()]);
-
-    // Reset form
-    $('#tx-category').value = '';
-    $('#tx-amount').value = '';
-    $('#tx-date').value = '';
-    $('#tx-taxcat').value = '';
-    $('#tx-note').value = '';
-
-    loadTransactions();
-    loadOverview();
-    renderReminders();
-}
-
-function deleteTx(id){
-    if(!confirm('Delete this transaction?')) return;
-    saveTxs(allTxs().filter(t=>t.id!==id));
-    loadTransactions();
-    loadOverview();
-    renderReminders();
-}
-
-function txsForUser(){
-    const u = currentUser(); if(!u) return [];
-    return allTxs().filter(t=>t.userId===u.id);
-}
-
-function loadTransactions(){
-    const tbody = $('#tx-table');
-    const q = ($('#tx-search')?.value || '').toLowerCase();
-    const rows = txsForUser()
-        .filter(t=> !q || [t.type,t.category,t.taxCat,t.note].join(' ').toLowerCase().includes(q))
-        .sort((a,b)=> b.date.localeCompare(a.date))
-        .map(t=>`
-            <tr>
-                <td>${t.type}</td>
-                <td>${t.category || '-'}</td>
-                <td>${t.taxCat || '-'}</td>
-                <td>${fmtMoney(t.amount)}</td>
-                <td>${t.date}</td>
-                <td>${t.note || ''}</td>
-                <td class="text-right">
-                    <button class="text-red-300 hover:text-red-400" onclick="deleteTx('${t.id}')">Delete</button>
-                </td>
-            </tr>
-        `).join('');
-    tbody.innerHTML = rows || `<tr><td colspan="7" class="text-center text-slate-400 py-3">No transactions yet.</td></tr>`;
-}
-
-$('#tx-search')?.addEventListener('input', loadTransactions);
-
-function inRange(date, start, end){
-    if(start && date < start) return false;
-    if(end && date > end) return false;
-    return true;
-}
-
-// **MODIFIED:** Simplified loadOverview to only show total utility transactions
-function loadOverview(){
-    const start = $('#ov-start').value || '0000-01-01';
-    const end = $('#ov-end').value || '9999-12-31';
-
-    const list = txsForUser().filter(t=> inRange(t.date, start, end));
-    const income = list.filter(t=>t.type==='INCOME').reduce((s,t)=>s + Number(t.amount), 0);
-    const expense = list.filter(t=>t.type==='EXPENSE').reduce((s,t)=>s + Number(t.amount), 0);
-    const taxable = Math.max(0, income - expense);
-
-    $('#ov-income').textContent = fmtMoney(income);
-    $('#ov-expense').textContent = fmtMoney(expense);
-    $('#ov-taxable').textContent = fmtMoney(taxable);
-}
+ 
 
 /*******************\n * BD Tax Calc     *
  *******************/
@@ -954,16 +883,6 @@ function renderAdmin(){
     $('#ad-users').textContent = String(usersArr.length);
     $('#ad-txs').textContent = String(txsArr.length);
 
-    const tbody = $('#ad-table');
-    const rows = txsArr
-        .slice()
-        .sort((a,b)=> b.date.localeCompare(a.date))
-        .slice(0, 15)
-        .map(t=>{
-            const u = usersArr.find(x=>x.id===t.userId);
-            return `<tr><td>${u?.email || '-'}</td><td>${t.type}</td><td>${t.category}</td><td>${fmtMoney(t.amount)}</td><td>${t.date}</td></tr>`;
-        }).join('');
-    tbody.innerHTML = rows || `<tr><td colspan="5" class="text-center text-slate-400 py-3">No transactions yet.</td></tr>`;
 }
 
 /*******************\n * Bootstrap       *
