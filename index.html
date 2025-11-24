@@ -63,6 +63,7 @@
         <button data-nav="documents" class="hover:text-teal-400 transition duration-150">Documents</button>
         <button id="nav-admin" data-nav="admin" class="hover:text-teal-400 transition duration-150 hidden">Admin</button>
         <button id="nav-logout" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-lg hover:shadow-xl transition duration-300 hidden">Logout</button>
+        <span id="nav-username" class="hidden font-semibold text-teal-300 ml-3"></span>
     </div>
 </nav>
 
@@ -369,8 +370,9 @@
 </div>
 
 <script>
-/**************\n * Utilities  *
- **************/
+/**********************
+ * Utilities & Storage
+ **********************/
 const STORAGE_KEYS = {
     users: 'tm_users',
     txs: 'tm_transactions',
@@ -378,29 +380,13 @@ const STORAGE_KEYS = {
     auth: 'tm_auth',
 };
 
-const BD_MIN_TAX = 0; // Minimum tax for all city corporation areas (as per general rule)
+const BD_MIN_TAX = 0;
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
-
-// Formats number to Bangladeshi currency style (2 decimal places)
-const fmtMoney = (n) => (Number(n)||0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const todayStr = () => new Date().toISOString().slice(0,10);
 const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-function showSection(sectionId) {
-    // Hide all sections first
-    document.querySelectorAll('section').forEach(section => {
-        section.classList.add('hidden');
-    });
-
-    // Show the requested section
-    const targetSection = document.getElementById(sectionId);
-    if (targetSection) {
-        targetSection.classList.remove('hidden');
-    }
-}
-function readLS(key, fallback){
+function readLS(key, fallback = null){
     try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
 }
 function writeLS(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
@@ -408,136 +394,205 @@ function writeLS(key, value){ localStorage.setItem(key, JSON.stringify(value)); 
 function currentUser(){ return readLS(STORAGE_KEYS.auth, null); }
 function setCurrentUser(u){ writeLS(STORAGE_KEYS.auth, u); }
 
-/******************\n * Navigation/UI  *
- ******************/
+/**********************
+ * Toast (Option B)
+ **********************/
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    if(!container) return; // if HTML not updated, silently ignore
 
+    const id = 'toast-' + uid();
+    const el = document.createElement('div');
+    el.id = id;
+    // Tailwind-ish classes (rely on tailwind loaded in your page)
+    const base = 'px-4 py-2 rounded shadow-lg text-white max-w-sm break-words';
+    const classes = {
+        success: 'bg-green-600',
+        error: 'bg-red-600',
+        info: 'bg-blue-600'
+    };
+    el.className = `${base} ${classes[type] || classes.info} animate__animated`;
+    el.style.transition = 'opacity 300ms ease, transform 300ms ease';
+    el.style.opacity = '1';
 
-function showSection(id) {
-    ['landing','auth','dashboard','documents','admin'].forEach(s=>{
-        document.getElementById(s).classList.add('hidden');
-    });
-    document.getElementById(id).classList.remove('hidden');
+    el.textContent = message;
+    container.appendChild(el);
 
-    // Lazy-load data when entering sections
-    if(id==='dashboard') { loadTransactions(); loadOverview(); renderReminders(); calculateBDTax(); }
-    if(id==='documents') { renderDocuments(); }
-    if(id==='admin') { ensureAdmin(); renderAdmin(); }
+    // auto remove
+    setTimeout(()=>{
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(8px)';
+        setTimeout(()=> container.removeChild(el), 350);
+    }, 2600);
 }
 
-// Update nav visibility based on auth/role
+/**********************
+ * Navigation & UI
+ **********************/
 function refreshNav(){
     const u = currentUser();
     const isAuthed = !!u;
-    $('#nav-logout').classList.toggle('hidden', !isAuthed);
-    $('[data-nav="dashboard"]').classList.toggle('hidden', !isAuthed);
-    $('[data-nav="documents"]').classList.toggle('hidden', !isAuthed);
-    // Admin nav only for ADMIN
-    const isAdmin = isAuthed && u.role === 'ADMIN';
-    $('#nav-admin').classList.toggle('hidden', !isAdmin);
+
+    // show/hide the dashboard/documents navigation (buttons have data-nav attributes)
+    $$('[data-nav]').forEach(btn=>{
+        const navKey = btn.getAttribute('data-nav');
+        if(navKey === 'dashboard' || navKey === 'documents'){
+            btn.classList.toggle('hidden', !isAuthed);
+        }
+    });
+
+    // Admin button (id='nav-admin' exists in HTML)
+    const isAdmin = isAuthed && u?.role === 'ADMIN';
+    const navAdmin = $('#nav-admin');
+    if(navAdmin) navAdmin.classList.toggle('hidden', !isAdmin);
+
+    // Hide the 'Login/Register' navigator (data-nav="auth") when authed
+    const authBtn = document.querySelector('[data-nav="auth"]');
+    if(authBtn) authBtn.classList.toggle('hidden', isAuthed);
+
+    // Logout button (id='nav-logout') visibility
+    const navLogout = $('#nav-logout');
+    if(navLogout) navLogout.classList.toggle('hidden', !isAuthed);
+
+    // Show username in navbar if logged in
+    const nameBox = $('#nav-username');
+    if(nameBox){
+        if(u){
+            nameBox.textContent = `Welcome, ${u.name}`;
+            nameBox.classList.remove('hidden');
+        } else {
+            nameBox.textContent = '';
+            nameBox.classList.add('hidden');
+        }
+    }
 }
 
-function ensureAuth(){
-    const u = currentUser();
+// Single showSection with auth guard for dashboard/documents
+function showSection(id){
+    // hide all sections first
+    document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+
+    // protect certain sections
+    if((id === 'dashboard' || id === 'documents' || id === 'admin') && !currentUser()){
+        showToast('Please login first', 'error');
+        // show auth area (login/register)
+        document.getElementById('auth')?.classList.remove('hidden');
+        refreshNav();
+        return;
+    }
+
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('hidden');
+
+    // lazy-initialize when entering specific sections
+    if(id === 'dashboard'){
+        // call only if those functions exist to avoid runtime errors
+        if(typeof loadTransactions === 'function') loadTransactions();
+        if(typeof loadOverview === 'function') loadOverview();
+        if(typeof renderReminders === 'function') renderReminders();
+        if(typeof calculateBDTax === 'function') calculateBDTax();
+    }
+    if(id === 'documents') renderDocuments();
+    if(id === 'admin'){ if(typeof ensureAdmin === 'function') ensureAdmin(); if(typeof renderAdmin === 'function') renderAdmin(); }
+
     refreshNav();
-    if(!u){ showSection('landing'); return; }
-    showSection('dashboard');
 }
 
-function ensureAdmin(){
-    const u = currentUser();
-    if(!(u && u.role==='ADMIN')){ showSection('dashboard'); }
-}
-
-// Hook nav buttons (already done in HTML, but here for completeness)
+// hook nav buttons (data-nav exists in your HTML)
 $$('[data-nav]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
         const target = btn.getAttribute('data-nav');
-        if(target==='admin') ensureAdmin();
+        if(target === 'admin' && typeof ensureAdmin === 'function') ensureAdmin();
         showSection(target);
-    })
+    });
 });
 
-$('#nav-logout').addEventListener('click', logout);
+// logout button
+if($('#nav-logout')) $('#nav-logout').addEventListener('click', logout);
 
-/****************\n * Auth (mock)  *
- ****************/
-function switchTab(which){
-    document.getElementById('login-form').classList.toggle('hidden', which!=='login');
-    document.getElementById('register-form').classList.toggle('hidden', which==='login');
-    document.getElementById('tab-login').classList.toggle('bg-purple-600', which==='login');
-    document.getElementById('tab-login').classList.toggle('bg-slate-700', which!=='login');
-    document.getElementById('tab-register').classList.toggle('bg-green-600', which==='register');
-    document.getElementById('tab-register').classList.toggle('bg-slate-700', which!=='register');
-}
-
+/**********************
+ * Auth (register/login/logout)
+ **********************/
 function users(){ return readLS(STORAGE_KEYS.users, []); }
 function saveUsers(arr){ writeLS(STORAGE_KEYS.users, arr); }
+
+function switchTab(which){
+    document.getElementById('login-form').classList.toggle('hidden', which !== 'login');
+    document.getElementById('register-form').classList.toggle('hidden', which === 'login');
+    document.getElementById('tab-login').classList.toggle('bg-purple-600', which === 'login');
+    document.getElementById('tab-login').classList.toggle('bg-slate-700', which !== 'login');
+    document.getElementById('tab-register').classList.toggle('bg-green-600', which === 'register');
+    document.getElementById('tab-register').classList.toggle('bg-slate-700', which !== 'register');
+}
 
 function register(){
     const name = $('#reg-name').value.trim();
     const email = $('#reg-email').value.trim().toLowerCase();
     const pass = $('#reg-password').value.trim();
-    if(!name || !email || !pass) { alert('Fill all fields'); return; }
-    const exists = users().some(u=>u.email===email);
-    if(exists){ alert('Email already registered'); return; }
+    if(!name || !email || !pass) { showToast('Fill all fields', 'error'); return; }
+    const exists = users().some(u => u.email === email);
+    if(exists){ showToast('Email already registered', 'error'); return; }
     const role = email.includes('admin') ? 'ADMIN' : 'USER'; // demo rule
     const newUser = { id: uid(), name, email, role };
     saveUsers([...users(), newUser]);
-    setCurrentUser(newUser);
-    alert('Registration successful!');
+    // don't auto-send to dashboard — show toast and switch to login
+    setCurrentUser(null); // ensure not logged in automatically; user should login
+    showToast('Registration successful. Please login.', 'success');
+    // switch to login tab and keep auth section visible
+    switchTab('login');
     refreshNav();
-    showSection('dashboard');
 }
 
 function login(){
     const email = $('#login-email').value.trim().toLowerCase();
     const pass = $('#login-password').value.trim();
-    if(!email || !pass) { alert('Fill all fields'); return; }
-    const u = users().find(u=>u.email===email);
-    if(!u){ alert('No account found. Please register.'); switchTab('register'); return; }
-    // NOTE: Password check is omitted for simplicity in this frontend-only demo.
+    if(!email || !pass) { showToast('Fill all fields', 'error'); return; }
+    const u = users().find(u => u.email === email);
+    if(!u){ showToast('No account found. Please register.', 'error'); switchTab('register'); return; }
+    // NOTE: Password omitted in this demo — production must validate
     setCurrentUser(u);
-    alert('Login successful!');
+    showToast('Login successful!', 'success');
     refreshNav();
+    // After login, allow access to dashboard then show it
     showSection('dashboard');
 }
 
 function logout(){
     localStorage.removeItem(STORAGE_KEYS.auth);
+    showToast('Logged out', 'info');
     refreshNav();
     showSection('landing');
 }
 
-/*******************\n * Transactions    *
- *******************/
+/**********************
+ * Transactions helpers (kept minimal)
+ **********************/
 function allTxs(){ return readLS(STORAGE_KEYS.txs, []); }
 function saveTxs(arr){ writeLS(STORAGE_KEYS.txs, arr); }
- 
 
-/*******************\n * BD Tax Calc     *
- *******************/
+/**********************
+ * BD Tax Calc functions
+ * (kept mostly as your original, minor safe-checks added)
+ **********************/
+let taxChart = null;
 
-let taxChart; // To hold the Chart.js instance
+const fmtMoney = (n) => (Number(n)||0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-/**
- * Calculates Bangladesh Income Tax based on tax year 2023-2024 slabs (for demonstration).
- */
 function calculateIncomeTaxBD(annualIncome, type, investmentAmount) {
     let exemptLimit;
     const income = Number(annualIncome) || 0;
     const investment = Number(investmentAmount) || 0;
-    
-    // 1. Tax Exemption Limit (FY 2023-24 Example)
+
     switch(type) {
         case 'female':
-            exemptLimit = 375000; // Female, 65+ Senior, Disabled
+            exemptLimit = 375000;
             break;
         case 'freedom_fighter':
-            exemptLimit = 500000; // Gazetted Freedom Fighter
+            exemptLimit = 500000;
             break;
         case 'male':
         default:
-            exemptLimit = 350000; // Male/Other
+            exemptLimit = 350000;
             break;
     }
 
@@ -546,7 +601,6 @@ function calculateIncomeTaxBD(annualIncome, type, investmentAmount) {
     let remainingTaxable = taxableIncome;
     const taxSlabs = [];
 
-    // 2. Progressive Tax Slabs (FY 2023-24 Example)
     const slabs = [
         { limit: 100000, rate: 0.05, name: "First 1 Lakh (5%)" },
         { limit: 300000, rate: 0.10, name: "Next 3 Lakh (10%)" },
@@ -556,119 +610,77 @@ function calculateIncomeTaxBD(annualIncome, type, investmentAmount) {
     ];
 
     for(const slab of slabs) {
-        let amountInSlab;
-        if (slab.limit === Infinity) {
-            amountInSlab = remainingTaxable;
-        } else {
-            amountInSlab = Math.min(remainingTaxable, slab.limit);
-        }
-
-        if (amountInSlab > 0) {
+        let amountInSlab = (slab.limit === Infinity) ? remainingTaxable : Math.min(remainingTaxable, slab.limit);
+        if(amountInSlab > 0){
             const tax = amountInSlab * slab.rate;
             grossTax += tax;
             remainingTaxable -= amountInSlab;
             taxSlabs.push({ name: slab.name, taxableAmount: amountInSlab, taxAmount: tax });
         }
-        
-        if (remainingTaxable <= 0) break;
+        if(remainingTaxable <= 0) break;
     }
-    
-    // 3. Investment Tax Rebate (15% on lowest of 3 amounts)
-    const maxRebateBase = Math.min(
-        investment, 
-        income * 0.20, 
-        10000000 // BDT 1 Crore Max Investment Limit
-    );
-    
-    const rebateAmount = maxRebateBase * 0.15;
-    
-    // 4. Net Payable Tax
-    let netTax = grossTax - rebateAmount;
 
-    // 5. Minimum Tax Check
+    const maxRebateBase = Math.min(investment, income * 0.20, 10000000);
+    const rebateAmount = maxRebateBase * 0.15;
+    let netTax = grossTax - rebateAmount;
     netTax = Math.max(netTax, BD_MIN_TAX);
-    
+
     return {
         exemptLimit,
         taxableIncome,
         grossTax,
-        rebateAmount: Math.max(0, rebateAmount), 
-        netTax: Math.max(0, netTax), 
+        rebateAmount: Math.max(0, rebateAmount),
+        netTax: Math.max(0, netTax),
         taxSlabs
     };
 }
 
-function calculateBDTax() {
-    const annualIncome = $('#annual-income').value;
-    const taxpayerType = $('#taxpayer-type').value;
-    const taxExempt = $('#tax-exempt').value;
+function calculateBDTax(){
+    const annualIncome = $('#annual-income') ? $('#annual-income').value : 0;
+    const taxpayerType = $('#taxpayer-type') ? $('#taxpayer-type').value : 'male';
+    const taxExempt = $('#tax-exempt') ? $('#tax-exempt').value : 0;
 
-    if (!annualIncome || isNaN(annualIncome)) {
-        // alert('Please enter a valid Annual Income.');
-        // Don't alert, just use 0 if invalid
-        $('#annual-income').value = 0;
-    }
-    
-    const income = parseFloat($('#annual-income').value);
-    const exempt = parseFloat(taxExempt);
+    const income = parseFloat(annualIncome) || 0;
+    const exempt = parseFloat(taxExempt) || 0;
 
     const result = calculateIncomeTaxBD(income, taxpayerType, exempt);
 
-    // Update Dashboard Results
-    $('#res-income').textContent = fmtMoney(income);
-    $('#res-exempt-limit').textContent = fmtMoney(result.exemptLimit);
-    $('#res-taxable').textContent = fmtMoney(result.taxableIncome);
-    $('#res-gross-tax').textContent = fmtMoney(result.grossTax);
-    $('#res-rebate').textContent = fmtMoney(result.rebateAmount);
-    $('#res-min-tax').textContent = fmtMoney(BD_MIN_TAX); // Display minimum tax
-    $('#res-net-tax').textContent = fmtMoney(result.netTax);
+    // Update results if elements exist
+    if($('#res-income')) $('#res-income').textContent = fmtMoney(income);
+    if($('#res-exempt-limit')) $('#res-exempt-limit').textContent = fmtMoney(result.exemptLimit);
+    if($('#res-taxable')) $('#res-taxable').textContent = fmtMoney(result.taxableIncome);
+    if($('#res-gross-tax')) $('#res-gross-tax').textContent = fmtMoney(result.grossTax);
+    if($('#res-rebate')) $('#res-rebate').textContent = fmtMoney(result.rebateAmount);
+    if($('#res-min-tax')) $('#res-min-tax').textContent = fmtMoney(BD_MIN_TAX);
+    if($('#res-net-tax')) $('#res-net-tax').textContent = fmtMoney(result.netTax);
 
-    // Render Chart Diagram
-    renderTaxChart(result.taxSlabs, result.netTax);
+    if(typeof renderTaxChart === 'function') renderTaxChart(result.taxSlabs, result.netTax);
 }
 
+function renderTaxChart(slabs, netTax){
+    const ctxEl = document.getElementById('taxChart');
+    if(!ctxEl) return;
+    const ctx = ctxEl.getContext('2d');
 
-function renderTaxChart(slabs, netTax) {
-    const ctx = document.getElementById('taxChart').getContext('2d');
-    
-    // Prepare data for the chart
     const labels = slabs.map(s => s.name);
-    const data = slabs.map(s => s.taxAmount);
-    
-    // If no tax is calculated (income below exempt limit), show the Net Tax (which will be min tax)
-    if (data.every(d => d === 0) && netTax > 0) {
+    const data = slabs.map(s => s.taxAmount || s.taxAmount === 0 ? s.taxAmount : s.taxableAmount * 0);
+
+    if(data.every(d => d === 0) && netTax > 0){
         labels.push("Minimum Tax / (Net Tax)");
         data.push(netTax);
     }
-    
-    // Destroy previous chart instance if it exists
-    if (taxChart) {
-        taxChart.destroy();
-    }
-    
+
+    if(taxChart) try { taxChart.destroy(); } catch(e){}
+
     taxChart = new Chart(ctx, {
-        type: 'bar', // Using Bar Chart for better slab comparison
+        type: 'bar',
         data: {
-            labels: labels,
+            labels,
             datasets: [{
                 label: 'Tax Amount (BDT)',
-                data: data,
-                backgroundColor: [
-                    'rgba(192, 132, 252, 0.7)', 
-                    'rgba(129, 140, 248, 0.7)', 
-                    'rgba(96, 165, 250, 0.7)',  
-                    'rgba(52, 211, 163, 0.7)',  
-                    'rgba(251, 191, 36, 0.7)',
-                    'rgba(248, 113, 113, 0.7)' // Red for minimum/net tax if 0 in slabs
-                ],
-                borderColor: [
-                    'rgba(192, 132, 252, 1)',
-                    'rgba(129, 140, 248, 1)',
-                    'rgba(96, 165, 250, 1)',
-                    'rgba(52, 211, 163, 1)',
-                    'rgba(251, 191, 36, 1)',
-                    'rgba(248, 113, 113, 1)'
-                ],
+                data,
+                backgroundColor: ['rgba(192,132,252,0.7)','rgba(129,140,248,0.7)','rgba(96,165,250,0.7)','rgba(52,211,163,0.7)','rgba(251,191,36,0.7)','rgba(248,113,113,0.7)'],
+                borderColor: ['rgba(192,132,252,1)','rgba(129,140,248,1)','rgba(96,165,250,1)','rgba(52,211,163,1)','rgba(251,191,36,1)','rgba(248,113,113,1)'],
                 borderWidth: 1
             }]
         },
@@ -676,18 +688,8 @@ function renderTaxChart(slabs, netTax) {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Tax Amount (BDT)',
-                        color: 'rgb(203 213 225)'
-                    },
-                    ticks: { color: 'rgb(203 213 225)' }
-                },
-                x: {
-                    ticks: { color: 'rgb(203 213 225)' }
-                }
+                y: { beginAtZero: true, ticks: { color: 'rgb(203 213 225)' } },
+                x: { ticks: { color: 'rgb(203 213 225)' } }
             },
             plugins: {
                 legend: { display: false },
@@ -697,114 +699,159 @@ function renderTaxChart(slabs, netTax) {
     });
 }
 
-
-/*******************\n * Reminders       *
- *******************/
+/**********************
+ * Reminders (safe)
+ **********************/
 function renderReminders(){
     const ul = $('#reminders');
+    if(!ul) return;
     const items = [];
     const now = new Date();
     const y = now.getFullYear();
-    const m = now.getMonth(); // 0-11
+    const m = now.getMonth();
 
-    // Quarterly advance income tax : due 15 Jan/Apr/Jul/Oct
-    const quarters = [
-        new Date(y,0,15), new Date(y,3,15), new Date(y,6,15), new Date(y,9,15)
-    ];
-    quarters.forEach(d=>{
+    const quarters = [ new Date(y,0,15), new Date(y,3,15), new Date(y,6,15), new Date(y,9,15) ];
+    quarters.forEach(d => {
         const daysLeft = Math.ceil((d - now)/(1000*60*60*24));
-        if(daysLeft >=0 && daysLeft <= 30){
-            items.push(`Advance tax due on ${d.toISOString().slice(0,10)} (in ${daysLeft} days)`);
-        }
+        if(daysLeft >= 0 && daysLeft <= 30) items.push(`Advance tax due on ${d.toISOString().slice(0,10)} (in ${daysLeft} days)`);
     });
 
-    // VAT monthly : 15th of next month if there were VAT txs in current month
-    const hadVAT = txsForUser().some(t=>{
-        const dt = new Date(t.date);
-        return t.taxCat==='VAT' && dt.getFullYear()===y && dt.getMonth()===m;
-    });
+    // hadVAT: if txsForUser exists use it, else skip
+    let hadVAT = false;
+    if(typeof txsForUser === 'function'){
+        try {
+            hadVAT = txsForUser().some(t => {
+                const dt = new Date(t.date);
+                return t.taxCat === 'VAT' && dt.getFullYear() === y && dt.getMonth() === m;
+            });
+        } catch(e){ hadVAT = false; }
+    }
     if(hadVAT){
         const due = new Date(y, m+1, 15);
         const daysLeft = Math.ceil((due - now)/(1000*60*60*24));
         if(daysLeft >= 0) items.push(`VAT return/payment due on ${due.toISOString().slice(0,10)} (in ${daysLeft} days)`);
     }
 
-    // Income Tax Return Submission Deadline (November 30)
     let returnDue = new Date(y, 10, 30);
-    if(now.getMonth() > 10) returnDue = new Date(y+1, 10, 30); // Next year's due date
-    const daysLeft = Math.ceil((returnDue - now)/(1000*60*60*24));
-    if(daysLeft >=0 && daysLeft <= 90){ // Show reminder if within 3 months
-        items.push(`Tax Return Submission due on ${returnDue.toISOString().slice(0,10)} (in ${daysLeft} days)`);
-    }
+    if(now.getMonth() > 10) returnDue = new Date(y+1, 10, 30);
+    const daysLeftRT = Math.ceil((returnDue - now)/(1000*60*60*24));
+    if(daysLeftRT >=0 && daysLeftRT <= 90) items.push(`Tax Return Submission due on ${returnDue.toISOString().slice(0,10)} (in ${daysLeftRT} days)`);
 
-    ul.innerHTML = items.length ? items.map(i=>`<li>${i}</li>`).join('') : '<li class="text-slate-400">No upcoming reminders.</li>';
+    ul.innerHTML = items.length ? items.map(i => `<li>${i}</li>`).join('') : '<li class="text-slate-400">No upcoming reminders.</li>';
 }
 
-/*******************\n * Documents (LS)  *
- *******************/
+/**********************
+ * Documents (BASE64 storage for persistent download)
+ **********************/
+/* helper: file -> base64 */
+function fileToBase64(file){
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
 function allDocs(){ return readLS(STORAGE_KEYS.docs, []); }
 function saveDocs(arr){ writeLS(STORAGE_KEYS.docs, arr); }
 
 function renderDocuments(){
-    const u = currentUser(); if(!u) return;
+    const u = currentUser();
     const tbody = $('#doc-table');
-    const list = allDocs().filter(d=>d.userId===u.id).sort((a,b)=> b.uploadedAt.localeCompare(a.uploadedAt));
-    tbody.innerHTML = list.map(d=>`
+    if(!tbody) return;
+    if(!u){
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-slate-400 py-3">Please login to view your documents.</td></tr>`;
+        return;
+    }
+
+    const list = allDocs().filter(d => d.userId === u.id).sort((a,b) => b.uploadedAt.localeCompare(a.uploadedAt));
+    if(list.length === 0){
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-slate-400 py-3">No documents yet.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = list.map(d => `
         <tr>
             <td>${d.name}</td>
             <td>${(d.size/1024).toFixed(1)} KB</td>
             <td>${d.uploadedAt.replace('T',' ').slice(0,16)}</td>
             <td>
-                ${d.url ? `<a class="link" href="${d.url}" download="${d.name}">Download</a> · `: ''}
+                ${d.data ? `<a class="link" href="${d.data}" download="${d.name}">Download</a> · ` : ''}
                 <button class="text-red-300 hover:text-red-400" onclick="deleteDoc('${d.id}')">Delete</button>
             </td>
-        </tr>`).join('') || `<tr><td colspan="4" class="text-center text-slate-400 py-3">No documents yet.</td></tr>`;
+        </tr>
+    `).join('');
 }
 
 function deleteDoc(id){
     if(!confirm('Delete this document?')) return;
-    const d = allDocs().find(x=>x.id===id);
-    if(d?.url) URL.revokeObjectURL(d.url);
-    saveDocs(allDocs().filter(x=>x.id!==id));
+    const doc = allDocs().find(x => x.id === id);
+    // no need to revoke ObjectURL because we store base64
+    saveDocs(allDocs().filter(x => x.id !== id));
     renderDocuments();
 }
 
-// Upload handler: store metadata + object URL for this session
+// Upload handler: convert to base64 and save (persistent)
 const uploadForm = document.getElementById('uploadForm');
 if(uploadForm){
-    uploadForm.addEventListener('submit', async (e)=>{
+    uploadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const u = currentUser(); if(!u) return alert('Please login');
-        const file = document.getElementById('fileInput').files[0];
-        if(!file) return alert('Choose a file');
-        const doc = { id: uid(), userId: u.id, name: file.name, size: file.size, uploadedAt: new Date().toISOString(), url: URL.createObjectURL(file) };
-        saveDocs([doc, ...allDocs()]);
-        document.getElementById('fileInput').value = '';
-        renderDocuments();
+        const u = currentUser();
+        if(!u){ showToast('Please login to upload files', 'error'); return; }
+
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput?.files?.[0];
+        if(!file){ showToast('Choose a file first', 'error'); return; }
+
+        try {
+            const base64 = await fileToBase64(file);
+            const doc = {
+                id: uid(),
+                userId: u.id,
+                name: file.name,
+                size: file.size,
+                uploadedAt: new Date().toISOString(),
+                data: base64
+            };
+            saveDocs([doc, ...allDocs()]);
+            fileInput.value = '';
+            showToast('File uploaded successfully', 'success');
+            renderDocuments();
+        } catch(err){
+            console.error(err);
+            showToast('File upload failed', 'error');
+        }
     });
 }
 
-/*******************\n * Admin *
- *******************/
+/**********************
+ * Admin helpers
+ **********************/
 function renderAdmin(){
     const usersArr = users();
     const txsArr = allTxs();
-    $('#ad-users').textContent = String(usersArr.length);
-    $('#ad-txs').textContent = String(txsArr.length);
-
+    if($('#ad-users')) $('#ad-users').textContent = String(usersArr.length);
+    if($('#ad-txs')) $('#ad-txs').textContent = String(txsArr.length);
 }
 
-/*******************\n * Bootstrap       *
- *******************/
-document.addEventListener('DOMContentLoaded', () => {
-    // Pre-fill overview dates to current month
+/**********************
+ * Bootstrap init
+ **********************/
+document.addEventListener('DOMContentLoaded', ()=>{
+    // prefill overview inputs safely if present
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
     const end = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().slice(0,10);
-    $('#ov-start').value = start;
-    $('#ov-end').value = end;
-    ensureAuth();
+    if($('#ov-start')) $('#ov-start').value = start;
+    if($('#ov-end')) $('#ov-end').value = end;
+
+    // ensure nav state and default view
+    refreshNav();
+    // if user logged-in, go to dashboard; otherwise landing
+    if(currentUser()) showSection('dashboard'); else showSection('landing');
 });
 </script>
+<div id="toast-container" class="fixed bottom-5 right-5 space-y-3 z-50"></div>
 </body>
 </html>
